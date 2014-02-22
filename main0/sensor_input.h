@@ -7,7 +7,7 @@ void sensor_input_loop();
 // sensors are zero-indexed
 #define NUM_DISTANCE_SENSORS 1
 
-bool get_distance( unsigned sensor_number, unsigned & value );
+float get_distance( unsigned sensor_number );
 long get_lift_encoder_ticks();
 
 void print_sensor_buffer();

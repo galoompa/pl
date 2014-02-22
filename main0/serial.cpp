@@ -99,15 +99,8 @@ void process_command( unsigned command, unsigned param )
       break;
     case 3: // distance sensors
     { unsigned value;
-      get_distance( 0, value );
       Serial.print( "S0 " );
-      Serial.println( value );
-      get_distance( 1, value );
-      Serial.print( "S1 " );
-      Serial.println( value );
-      get_distance( 2, value );
-      Serial.print( "S2 " );
-      Serial.println( value );
+      Serial.println( get_distance( 0 ) );
     } break;
     case 4: // lift motor move
       switch( param ) {
@@ -145,6 +138,14 @@ void process_command( unsigned command, unsigned param )
           Serial.print( "Cycles/second: " );
           Serial.println( cycles_per_second );
           break;
+        case 6:
+          Serial.println( -9 % 5 );
+          Serial.println( -4 % 5 );
+          Serial.println( 9 % 5 );
+          for( unsigned i = 0; i < 7; i++ ) {
+          Serial.println(  -1 + i - 7/2 );
+          Serial.println(  (-1 + i - 7/2) % 7 );
+          }
         default:
           break;
       }

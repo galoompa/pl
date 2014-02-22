@@ -23,7 +23,6 @@ unsigned                       distance_raw_buffer[NUM_DISTANCE_SENSORS][BUFFER_
 class DistanceSensorFilter
 {
   private:
-    //unsigned  sample_buffer[FILTER_SAMPLES];
     unsigned  sample;
     unsigned  filter_buffer[FILTER_BUFFER_SIZE];
     unsigned  sample_index;
@@ -59,7 +58,7 @@ class DistanceSensorFilter
     {
       for( unsigned i = 0; i < FILTER_BUFFER_SIZE; i++ ) {
         Serial.print( " " );
-        Serial.println( filter_buffer[(filter_index - 1 + i)%FILTER_BUFFER_SIZE] );
+        Serial.println( filter_buffer[i] );
       }
     }
 };
@@ -78,24 +77,6 @@ void sensor_input_loop()
     next_sample_time = time + time_between_samples;
     
     sensor_right.process_input( analogRead( 0 ) );
-    
-    /*static int last_sample = 0;
-    int sample = analogRead( next_distance_sensor );
-    
-    // reject readings that appear to be noise
-    if( abs( sample - last_sample) < NOISE_LEVEL ) {
-      distance_raw_buffer[next_distance_sensor][next_distance_buffer] = sample;
-      last_sample = 0;
-      
-      // next sensor / buffer
-      next_distance_sensor++;
-      if( next_distance_sensor >= NUM_DISTANCE_SENSORS ) {
-        next_distance_sensor = 0;
-        next_distance_buffer = (next_distance_buffer + 1) % BUFFER_SIZE;
-      }
-    } else {
-      last_sample = sample;
-    }*/
   }
   
   // Lift encoder input
@@ -118,17 +99,16 @@ void sensor_input_loop()
   }
 }
 
-bool get_distance( unsigned sensor_number, unsigned & value )
+float get_distance( unsigned sensor_number )
 {
-  if( sensor_number >= NUM_DISTANCE_SENSORS ) {
-    return false;
+  switch( sensor_number ) {
+    case 0:
+      return 7831*pow( sensor_right.get_average(), -1.04 );
+      break;
+    default:
+      break;
   }
-  unsigned long total = 0;
-  for( unsigned i = 0; i < BUFFER_SIZE; i++ ) {
-    total += distance_raw_buffer[sensor_number][i];
-  }
-  value = (float)total / BUFFER_SIZE;
-  return true;
+  return 0;
 }
 
 long get_lift_encoder_ticks()
@@ -138,10 +118,5 @@ long get_lift_encoder_ticks()
 
 void print_sensor_buffer()
 {
-  /*Serial.println( next_distance_buffer );
-  for( unsigned i = 0; i < BUFFER_SIZE; i++ ) {
-    Serial.print( " " );
-    Serial.println( distance_raw_buffer[0][i] );
-  }*/
   sensor_right.print_buffer();
 }
