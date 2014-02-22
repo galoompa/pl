@@ -13,7 +13,10 @@ enum motor_direction {
 };
 
 void set_lift_action( motor_direction );
+void set_lift_speed( float speed );
+
 void set_lat_action( motor_direction );
-void set_lat_speed( float speed );
+void set_lat_speed( float speed );        // in ticks/sec (200 ticks/rev)
+long get_lat_position_ticks();
 
 #endif
