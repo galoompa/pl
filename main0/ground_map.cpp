@@ -8,20 +8,19 @@ void map_sensor_to_index( unsigned sensor, unsigned index );
 unsigned mod_pos( int value, int mod );
 
 // resolution defined in ticks
-#define MAP_RESOLUTION   265
+#define MAP_RESOLUTION   265  // for 1 cm
+
+// in units of MAP_RESOLUTION (i.e. 1 cm)
 #define MAP_SIZE         7
 #define SEAT_SIZE        3
 
-static float ground_map_buffer[MAP_SIZE];
-
-static long next_sample_position_large = 0;
-static long next_sample_position_small = 0;
+static float  ground_map_buffer[MAP_SIZE];
+static int    last_pos = 0;
 
 void ground_map_setup()
 {
 }
 
-static int last_pos = 0;
 void ground_map_loop()
 {
   long pos = get_lat_position_ticks() / MAP_RESOLUTION;
@@ -52,6 +51,7 @@ bool safe_zone()
   float min_height = ground_map_buffer[start_pos];
   float max_height = ground_map_buffer[start_pos];
   
+  // find MIN and MAX for the seat area
   for( int i = 1; i < SEAT_SIZE; i++ ) {
     unsigned pos_i = (start_pos + i)%MAP_SIZE;
     if( ground_map_buffer[pos_i] < min_height ) {

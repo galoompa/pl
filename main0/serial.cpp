@@ -101,6 +101,8 @@ void process_command( unsigned command, unsigned param )
     { unsigned value;
       Serial.print( "S0 " );
       Serial.println( get_distance( 0 ) );
+      Serial.print( "S1 " );
+      Serial.println( get_distance( 1 ) );
     } break;
     case 4: // lift motor move
       switch( param ) {
@@ -117,10 +119,13 @@ void process_command( unsigned command, unsigned param )
           break;
       }
       break;
-    case 5: // lift motor speed
-      set_lift_speed( param );
+    case 5: // lift motor speed up
+      set_lift_up_speed( param );
       break;
-    case 6: // misc debug
+    case 6: // lift motor speed down
+      set_lift_down_speed( param );
+      break;
+    case 9: // misc debug
       switch( param ) {
         case 1:
           Serial.println( get_lift_encoder_ticks() );

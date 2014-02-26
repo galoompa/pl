@@ -2,11 +2,12 @@
 #include <AccelStepper.h>
 #include "motor.h"
 
-static float RAW_LAT_SPEED = 50; // ticks/sec
-//static float RAW_LIFT_SPEED = 
+static float RAW_LAT_SPEED = 100;        // ticks/sec
+static float RAW_LIFT_UP_SPEED = 90;     // of 255 PWM
+static float RAW_LIFT_DOWN_SPEED = 20;   // of 255 PWM
 
 AF_DCMotor lift_motor( 1, MOTOR12_64KHZ ); // create motor #1, 64KHz pwm
-AF_Stepper lat_motor( 200, 2 );          // 200 steps per rev, port 2 - channel 3&4
+AF_Stepper lat_motor( 200, 2 );            // 200 steps per rev, port 2 - channel 3&4
 
 void forwardstep() {  
   lat_motor.onestep( FORWARD, INTERLEAVE );
@@ -21,8 +22,8 @@ motor_direction lat_action;
 
 void motor_setup()
 {
-  lift_motor.setSpeed( 10 ); // set the speed to 100/255
-  lat_stepper.setSpeed( 10 ); // 10 steps / sec
+  lift_motor.setSpeed( RAW_LIFT_DOWN_SPEED );
+  lat_stepper.setSpeed( RAW_LAT_SPEED );
   lift_action = MOTOR_STOP;
   lat_action = MOTOR_STOP;
 }
@@ -40,9 +41,11 @@ void set_lift_action( motor_direction dir )
   switch( dir ) {
     case MOTOR_UP:
       lift_motor.run( FORWARD );
+      lift_motor.setSpeed( RAW_LIFT_UP_SPEED );
       break;
     case MOTOR_DOWN:
       lift_motor.run( BACKWARD );
+      lift_motor.setSpeed( RAW_LIFT_DOWN_SPEED );
       break;
     case MOTOR_STOP:
     default:
@@ -51,9 +54,18 @@ void set_lift_action( motor_direction dir )
   }
 }
 
-void set_lift_speed( float speed )
+void set_lift_up_speed( float speed )
 {
-  lift_motor.setSpeed( speed );
+  RAW_LIFT_UP_SPEED = speed;
+  // apply speed
+  set_lift_action( lift_action );
+}
+
+void set_lift_down_speed( float speed )
+{
+  RAW_LIFT_DOWN_SPEED = speed;
+  // apply speed
+  set_lift_action( lift_action );
 }
 
 void set_lat_action( motor_direction dir )

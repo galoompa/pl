@@ -5,7 +5,7 @@ void sensor_input_setup();
 void sensor_input_loop();
 
 // sensors are zero-indexed
-#define NUM_DISTANCE_SENSORS 1
+#define NUM_DISTANCE_SENSORS 2
 
 float get_distance( unsigned sensor_number );
 long get_lift_encoder_ticks();

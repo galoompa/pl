@@ -4,6 +4,7 @@
 #define BUFFER_SIZE      67
 #define LIFT_ENCODER_A   2
 #define LIFT_ENCODER_B   3
+#define SENSOR_HEIGHT_CM 84
 
 static const unsigned          time_between_samples = 5; // ms
 static unsigned long           next_sample_time = 0;
@@ -103,7 +104,7 @@ float get_distance( unsigned sensor_number )
 {
   switch( sensor_number ) {
     case 0:
-      return 7831*pow( sensor_right.get_average(), -1.04 );
+      return SENSOR_HEIGHT_CM - 7831*pow( sensor_right.get_average(), -1.04 );
       break;
     default:
       break;
