@@ -1,9 +1,12 @@
 #include "sensor_input.h"
 #include "Arduino.h"
 
-#define BUFFER_SIZE      67
+// ports
 #define LIFT_ENCODER_A   2
 #define LIFT_ENCODER_B   3
+
+#define LIFT_TICKS_PER_CM  40.7
+
 #define SENSOR_HEIGHT_CM 84
 
 static const unsigned          time_between_samples = 5; // ms
@@ -14,8 +17,6 @@ static unsigned                next_distance_buffer = 0;
 static bool                    last_lift_encoder_a = LOW;
 static bool                    last_lift_encoder_b = LOW;
 static long                    lift_encoder_ticks = 0;
-
-unsigned                       distance_raw_buffer[NUM_DISTANCE_SENSORS][BUFFER_SIZE];
 
 #define FILTER_SAMPLES      3
 #define FILTER_BUFFER_SIZE  10
@@ -65,6 +66,7 @@ class DistanceSensorFilter
 };
 
 static DistanceSensorFilter sensor_right;
+static DistanceSensorFilter sensor_left;
 
 void sensor_input_setup()
 {
@@ -77,13 +79,19 @@ void sensor_input_loop()
   if( time > next_sample_time ) {
     next_sample_time = time + time_between_samples;
     
-    sensor_right.process_input( analogRead( 0 ) );
+    sensor_right.process_input( analogRead( 1 ) );
+    sensor_left.process_input( analogRead( 0 ) );
   }
   
   // Lift encoder input
   bool lift_encoder_a = digitalRead( LIFT_ENCODER_A );
   bool lift_encoder_b = digitalRead( LIFT_ENCODER_B );
   if( last_lift_encoder_a != lift_encoder_a ) {
+    //Serial.print( "A " );
+    //Serial.println( lift_encoder_a );
+    if( last_lift_encoder_b != lift_encoder_b ) {
+      Serial.println( "-- issue --" );
+    }
     last_lift_encoder_a = lift_encoder_a;
     if( lift_encoder_a == lift_encoder_b ) {
       lift_encoder_ticks--;
@@ -91,6 +99,8 @@ void sensor_input_loop()
       lift_encoder_ticks++;
     }
   } else if( last_lift_encoder_b != lift_encoder_b ) {
+    //Serial.print( "B " );
+    //Serial.println( lift_encoder_b );
     last_lift_encoder_b = lift_encoder_b;
     if( lift_encoder_b == lift_encoder_a ) {
       lift_encoder_ticks++;
@@ -103,8 +113,13 @@ void sensor_input_loop()
 float get_distance( unsigned sensor_number )
 {
   switch( sensor_number ) {
-    case 0:
+    case RIGHT_DISTANCE_SENSOR:
       return SENSOR_HEIGHT_CM - 7831*pow( sensor_right.get_average(), -1.04 );
+      //return sensor_right.get_average();
+      break;
+    case LEFT_DISTANCE_SENSOR:
+      return SENSOR_HEIGHT_CM - 8522*pow( sensor_left.get_average(), -1.06 );
+      //return sensor_left.get_average();
       break;
     default:
       break;
@@ -117,7 +132,13 @@ long get_lift_encoder_ticks()
   return lift_encoder_ticks;
 }
 
+float get_lift_cm()
+{
+  return (float)lift_encoder_ticks / LIFT_TICKS_PER_CM;
+}
+
 void print_sensor_buffer()
 {
   sensor_right.print_buffer();
+  sensor_left.print_buffer();
 }

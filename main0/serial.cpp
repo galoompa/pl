@@ -97,13 +97,21 @@ void process_command( unsigned command, unsigned param )
     case 2: // lat motor speed
       set_lat_speed( param );
       break;
-    case 3: // distance sensors
-    { unsigned value;
-      Serial.print( "S0 " );
-      Serial.println( get_distance( 0 ) );
-      Serial.print( "S1 " );
-      Serial.println( get_distance( 1 ) );
-    } break;
+    case 3: // lift motor auto
+      switch( param ) {
+        case 0:
+          set_lift_action_auto( MOTOR_STOP );
+          break;
+        case 1:
+          set_lift_action_auto( MOTOR_UP );
+          break;
+        case 2:
+          set_lift_action_auto( MOTOR_DOWN );
+          break;
+        default:
+          break;
+      }
+      break;
     case 4: // lift motor move
       switch( param ) {
         case 0:
@@ -125,13 +133,25 @@ void process_command( unsigned command, unsigned param )
     case 6: // lift motor speed down
       set_lift_down_speed( param );
       break;
+    case 7:
+      set_K( param );
+      break;
     case 9: // misc debug
       switch( param ) {
         case 1:
-          Serial.println( get_lift_encoder_ticks() );
-          break;
         case 2:
-          Serial.println( get_lat_position_ticks() );
+          //Serial.print( get_lift_encoder_ticks() );
+          //Serial.println( " ticks" );
+          Serial.print( "Lift " );
+          Serial.print( get_lift_cm() );
+          Serial.println( " cm" );
+          //break;
+        
+          //Serial.print( get_lat_position_ticks() );
+          //Serial.println( " ticks" );
+          Serial.print( "Lat  " );
+          Serial.print( get_lat_position_cm() );
+          Serial.println( " cm" );
           break;
         case 3:
           print_ground_map();
@@ -143,14 +163,13 @@ void process_command( unsigned command, unsigned param )
           Serial.print( "Cycles/second: " );
           Serial.println( cycles_per_second );
           break;
-        case 6:
-          Serial.println( -9 % 5 );
-          Serial.println( -4 % 5 );
-          Serial.println( 9 % 5 );
-          for( unsigned i = 0; i < 7; i++ ) {
-          Serial.println(  -1 + i - 7/2 );
-          Serial.println(  (-1 + i - 7/2) % 7 );
-          }
+
+        case 9:
+          Serial.print( "LEFT  " );
+          Serial.println( get_distance( LEFT_DISTANCE_SENSOR ) );
+          Serial.print( "RIGHT " );
+          Serial.println( get_distance( RIGHT_DISTANCE_SENSOR ) );
+          break;
         default:
           break;
       }

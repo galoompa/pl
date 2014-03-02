@@ -3,16 +3,19 @@
 #include "sensor_input.h"
 #include "Arduino.h"
 
-//void map_to_index( unsigned index );
 void map_sensor_to_index( unsigned sensor, unsigned index );
 unsigned mod_pos( int value, int mod );
 
-// resolution defined in ticks
-#define MAP_RESOLUTION   265  // for 1 cm
+// resolution defined in cm
+#define MAP_RESOLUTION   1.0  // for 1 cm
 
 // in units of MAP_RESOLUTION (i.e. 1 cm)
-#define MAP_SIZE         7
-#define SEAT_SIZE        3
+#define MAP_SIZE         25
+#define SEAT_SIZE        11
+
+#define SAFE_MIN_HEIGHT    9
+#define SAFE_MAX_HEIGHT    23
+#define SAFE_SURFACE_NOISE 3
 
 static float  ground_map_buffer[MAP_SIZE];
 static int    last_pos = 0;
@@ -23,21 +26,29 @@ void ground_map_setup()
 
 void ground_map_loop()
 {
-  long pos = get_lat_position_ticks() / MAP_RESOLUTION;
-  
-  // same position, do nothing
-  if( last_pos == pos ) {
-    return;
-  }
-  
+  // check for new position
+  int pos = (int)( get_lat_position_cm() / MAP_RESOLUTION );
+
   if( pos > last_pos ) {
-    map_sensor_to_index( 0, mod_pos( pos + MAP_SIZE/2, MAP_SIZE ) );
-  } else {
-    // no sensors on other size...
-    // the below function will simply zero the values (since sensor 1 does not exist)
-    map_sensor_to_index( 1, mod_pos( pos - MAP_SIZE/2, MAP_SIZE ) );
+    map_sensor_to_index( RIGHT_DISTANCE_SENSOR, mod_pos( pos + MAP_SIZE/2, MAP_SIZE ) );
+    last_pos = pos;
+  } else if( pos < last_pos ) {
+    map_sensor_to_index( LEFT_DISTANCE_SENSOR, mod_pos( pos - MAP_SIZE/2, MAP_SIZE ) );
+    last_pos = pos;
   }
-  last_pos = pos;
+  
+  // check if in safe zone
+  static bool cur_safe = false;
+  bool new_safe = safe_zone();
+  
+  if( new_safe != cur_safe ) {
+    cur_safe = new_safe;
+    if( new_safe ) {
+      Serial.println( "Safe" );
+    } else {
+      Serial.println( "Not safe" );
+    }
+  }
 }
 
 void map_sensor_to_index( unsigned sensor, unsigned index )
@@ -60,6 +71,16 @@ bool safe_zone()
       max_height = ground_map_buffer[pos_i];
     }
   }
+  
+  float ave_height = (max_height + min_height) / 2.0;
+  
+  if( ((max_height - min_height) < SAFE_SURFACE_NOISE) &&
+      (ave_height < SAFE_MAX_HEIGHT) &&
+      (ave_height > SAFE_MIN_HEIGHT) )
+  {
+    return true;
+  }
+  return false;
 }
 
 void print_ground_map()
