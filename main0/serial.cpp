@@ -13,6 +13,9 @@ void serial_setup()
 {
   Serial.begin( 9600 ); // set up Serial library at 9600 bps
   Serial.println( "Main test" );
+  
+  pinMode( 9, INPUT_PULLUP );
+  pinMode( 10, INPUT_PULLUP );
 }
 
 void serial_loop()
@@ -43,6 +46,26 @@ void serial_loop()
       Serial.read();
       len--;
     }
+  }
+  
+  // buttons
+  static bool last_right_button = HIGH;
+  static bool last_left_button = HIGH;
+  
+  bool new_right_button = digitalRead( 9 );
+  bool new_left_button = digitalRead( 10 );
+  if( new_right_button != last_right_button ) {
+    last_right_button = new_right_button;
+    //Serial.print( "Right " );
+    //Serial.println( new_right_button );
+    set_lat_action( MOTOR_RIGHT );
+
+  }
+  if( new_left_button != last_left_button ) {
+    last_left_button = new_left_button;
+    //Serial.print( "Left " );
+    //Serial.println( new_left_button );
+    set_lat_action( MOTOR_LEFT );
   }
 }
 

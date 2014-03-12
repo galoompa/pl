@@ -22,6 +22,7 @@ static int    last_pos = 0;
 
 void ground_map_setup()
 {
+  pinMode( 13, OUTPUT );
 }
 
 void ground_map_loop()
@@ -30,25 +31,32 @@ void ground_map_loop()
   int pos = (int)( get_lat_position_cm() / MAP_RESOLUTION );
 
   if( pos > last_pos ) {
-    map_sensor_to_index( RIGHT_DISTANCE_SENSOR, mod_pos( pos + MAP_SIZE/2, MAP_SIZE ) );
-    last_pos = pos;
+    //map_sensor_to_index( RIGHT_DISTANCE_SENSOR, mod_pos( pos + MAP_SIZE/2, MAP_SIZE ) );
+    ground_map_buffer[mod_pos( pos + MAP_SIZE/2, MAP_SIZE )] = get_distance( RIGHT_DISTANCE_SENSOR );
   } else if( pos < last_pos ) {
-    map_sensor_to_index( LEFT_DISTANCE_SENSOR, mod_pos( pos - MAP_SIZE/2, MAP_SIZE ) );
-    last_pos = pos;
+    ground_map_buffer[mod_pos( pos - MAP_SIZE/2, MAP_SIZE )] = get_distance( LEFT_DISTANCE_SENSOR );
+    //map_sensor_to_index( LEFT_DISTANCE_SENSOR, mod_pos( pos - MAP_SIZE/2, MAP_SIZE ) );
   }
   
   // check if in safe zone
   static bool cur_safe = false;
-  bool new_safe = safe_zone();
   
-  if( new_safe != cur_safe ) {
-    cur_safe = new_safe;
-    if( new_safe ) {
-      Serial.println( "Safe" );
-    } else {
-      Serial.println( "Not safe" );
+  if( last_pos != pos ) {
+    bool new_safe = safe_zone();
+    if( new_safe != cur_safe ) {
+      cur_safe = new_safe;
+      if( new_safe ) {
+        Serial.println( "Safe" );
+        digitalWrite( 13, HIGH );
+        set_lat_action( MOTOR_STOP );
+      } else {
+        Serial.println( "Not safe" );
+        digitalWrite( 13, LOW );
+      }
     }
   }
+  
+  last_pos = pos;
 }
 
 void map_sensor_to_index( unsigned sensor, unsigned index )

@@ -4,4 +4,9 @@
 void interlock_setup();
 void interlock_loop();
 
+bool interlocked_left();
+bool interlocked_right();
+bool interlocked_up();
+bool interlocked_down();
+
 #endif

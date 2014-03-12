@@ -7,7 +7,7 @@
 
 #define LIFT_TICKS_PER_CM  40.7
 
-#define SENSOR_HEIGHT_CM 84
+#define SENSOR_HEIGHT_CM 68.5
 
 static const unsigned          time_between_samples = 5; // ms
 static unsigned long           next_sample_time = 0;
@@ -114,11 +114,13 @@ float get_distance( unsigned sensor_number )
 {
   switch( sensor_number ) {
     case RIGHT_DISTANCE_SENSOR:
-      return SENSOR_HEIGHT_CM - 7831*pow( sensor_right.get_average(), -1.04 );
+      //return SENSOR_HEIGHT_CM - 7831*pow( sensor_right.get_average(), -1.04 );
+      return SENSOR_HEIGHT_CM - 11610*pow( sensor_right.get_average(), -1.092 );
       //return sensor_right.get_average();
       break;
     case LEFT_DISTANCE_SENSOR:
-      return SENSOR_HEIGHT_CM - 8522*pow( sensor_left.get_average(), -1.06 );
+      //return SENSOR_HEIGHT_CM - 8522*pow( sensor_left.get_average(), -1.06 );
+      return SENSOR_HEIGHT_CM - 8197*pow( sensor_left.get_average(), -1.043 );
       //return sensor_left.get_average();
       break;
     default:

@@ -4,12 +4,14 @@
 #include "motor.h"
 #include "sensor_input.h"
 #include "ground_map.h"
+#include "interlock.h"
 
 void setup() {
   serial_setup();
   motor_setup();
   sensor_input_setup();
   ground_map_setup();
+  interlock_setup();
 }
 
 void loop() {
@@ -17,4 +19,5 @@ void loop() {
   motor_loop();
   sensor_input_loop();
   ground_map_loop();
+  interlock_loop();
 }

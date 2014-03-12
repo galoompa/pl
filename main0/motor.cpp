@@ -2,20 +2,22 @@
 #include <AccelStepper.h>
 #include "motor.h"
 #include "sensor_input.h"
+#include "interlock.h"
 
 #define LAT_TICKS_PER_CM 85.3
 
-#define LIFT_CONTROL_LOOP_MS  100     // ten times per second
+#define LIFT_CONTROL_LOOP_MS       100     // ten times per second
+#define LIFT_CONTROL_CM_PER_LOOP   0.2     
 
 static float RAW_LAT_SPEED = LAT_TICKS_PER_CM;        // ticks/sec
 static float RAW_LIFT_UP_SPEED = 90;                  // of 255 PWM
-static float RAW_LIFT_DOWN_SPEED = 20;                // of 255 PWM
+static float RAW_LIFT_DOWN_SPEED = 70;                // of 255 PWM
 
 AF_DCMotor lift_motor( 1, MOTOR12_64KHZ ); // create motor #1, 64KHz pwm
 AF_Stepper lat_motor( 200, 2 );            // 200 steps per rev, port 2 - channel 3&4
 
 #define LIFT_LOWER_LIMIT  0
-#define LIFT_UPPER_LIMIT  25
+#define LIFT_UPPER_LIMIT  15
 
 static bool lift_motor_manual = false;
 static float lift_motor_reference = 0;
@@ -44,6 +46,11 @@ void motor_setup()
 void motor_loop()
 {
   // lateral motor run
+  if( lat_action == MOTOR_RIGHT && interlocked_right() ||
+      lat_action == MOTOR_LEFT  && interlocked_left() )
+  {
+    set_lat_action( MOTOR_STOP );
+  }
   if( lat_action != MOTOR_STOP ) {
     lat_stepper.runSpeed();
   }
@@ -55,20 +62,20 @@ void motor_loop()
   if( next_sample_time == 0 ) {
     next_sample_time = time;
   }
-  
+  // control loop
   if( time > next_sample_time ) {
     next_sample_time += LIFT_CONTROL_LOOP_MS;
     if( !lift_motor_manual ) {
       float error;
       switch( lift_action ) {
         case MOTOR_UP:
-          if( get_lift_cm() > LIFT_UPPER_LIMIT ) {
+          if( get_lift_cm() > LIFT_UPPER_LIMIT || interlocked_up() ) {
             lift_action = MOTOR_STOP;
             lift_motor.run( RELEASE );
             break;
           }
           lift_motor.run( FORWARD );
-          lift_motor_reference += 0.1;
+          lift_motor_reference += LIFT_CONTROL_CM_PER_LOOP;
           error = lift_motor_reference - get_lift_cm();
           if( error > 0 ) {
             lift_motor.setSpeed( Kp * error );
@@ -77,13 +84,13 @@ void motor_loop()
           }
           break;
         case MOTOR_DOWN:
-          if( get_lift_cm() < LIFT_LOWER_LIMIT ) {
+          if( get_lift_cm() < LIFT_LOWER_LIMIT || interlocked_down() ) {
             lift_action = MOTOR_STOP;
             lift_motor.run( RELEASE );
             break;
           }
           lift_motor.run( BACKWARD );
-          lift_motor_reference -= 0.1;
+          lift_motor_reference -= LIFT_CONTROL_CM_PER_LOOP;
           error = lift_motor_reference - get_lift_cm();
           if( error < 0 ) {
             lift_motor.setSpeed( -Kp * error );
@@ -92,7 +99,7 @@ void motor_loop()
           }
           break;
         case MOTOR_STOP:
-          lift_motor.run( RELEASE );
+          //lift_motor.run( RELEASE );
           break;
       }
     }
@@ -101,6 +108,10 @@ void motor_loop()
 
 void set_lift_action( motor_direction dir )
 {
+  // override interlock on non-auto
+  /*if( interlocked_up() || interlocked_down() ) {
+    return;
+  }*/
   lift_motor_manual = true;
   lift_action = dir;
   switch( dir ) {
@@ -119,8 +130,16 @@ void set_lift_action( motor_direction dir )
   }
 }
 
+int get_lift_action()
+{
+  return lift_action;
+}
+
 void set_lift_action_auto( motor_direction dir )
 {
+  if( interlocked_up() || interlocked_down() ) {
+    return;
+  }
   lift_motor_manual = false;
   lift_action = dir;
   lift_motor_reference = get_lift_cm();
@@ -160,6 +179,9 @@ void set_lift_down_speed( float speed )
 
 void set_lat_action( motor_direction dir )
 {
+  if( interlocked_left() || interlocked_right() ) {
+    return;
+  }
   float lat_speed = 0;
   lat_action = dir;
   switch( dir ) {
@@ -195,4 +217,9 @@ float get_lat_position_cm()
 void set_K( float new_K )
 {
   Kp = new_K;
+}
+
+int get_lat_action()
+{
+  return lat_action;
 }
