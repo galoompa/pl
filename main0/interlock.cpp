@@ -4,10 +4,12 @@
 #include "ground_map.h"
 
 #define CHECK_COLLISION_LOOP_MS   100
-#define COLLISION_HEIGHT          25  //cm
+#define COLLISION_HEIGHT          30  //cm
 
 static bool right_collision = false;
 static bool left_collision = false;
+
+static bool override_sling_raised = false;
 
 void interlock_setup()
 {
@@ -15,6 +17,7 @@ void interlock_setup()
 
 void interlock_loop()
 {
+  //static long print_sensor_buffer_time = 0;
   // check for collisions
   unsigned long time = millis();
   static long next_collision_check = 0;
@@ -26,6 +29,20 @@ void interlock_loop()
     int lat_direction = get_lat_action();
     right_collision = get_distance( RIGHT_DISTANCE_SENSOR ) > COLLISION_HEIGHT;
     left_collision = get_distance( LEFT_DISTANCE_SENSOR ) > COLLISION_HEIGHT;
+    if( right_collision ) {
+      /*Serial.println( "Right collision" );
+      if( time > print_sensor_buffer_time ) {
+        print_sensor_buffer();
+        print_sensor_buffer_time = time + 2000;
+      }*/
+    }
+    if( left_collision ) {
+      /*Serial.println( "Left collision" );
+      if( time > print_sensor_buffer_time ) {
+        print_sensor_buffer();
+        print_sensor_buffer_time = time + 2000;
+      }*/
+    }
   }
     
 }
@@ -33,13 +50,15 @@ void interlock_loop()
 bool interlocked_left()
 {
   bool moving_up_down = get_lift_action() != MOTOR_STOP;
-  return right_collision || moving_up_down;
+  bool lift_low = get_lift_position() != LIFT_UP;
+  return left_collision || moving_up_down || (lift_low && !override_sling_raised);
 }
 
 bool interlocked_right()
 {
   bool moving_up_down = get_lift_action() != MOTOR_STOP;
-  return right_collision || moving_up_down;
+  bool lift_low = get_lift_position() != LIFT_UP;
+  return right_collision || moving_up_down || (lift_low && !override_sling_raised);
 }
 
 bool interlocked_up()
@@ -52,4 +71,9 @@ bool interlocked_down()
 {
   bool moving_left_right = get_lat_action() != MOTOR_STOP;
   return moving_left_right || !safe_zone();
+}
+
+void set_override_sling_raised( bool override )
+{
+  override_sling_raised = override;
 }

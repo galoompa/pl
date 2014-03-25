@@ -9,4 +9,6 @@ bool interlocked_right();
 bool interlocked_up();
 bool interlocked_down();
 
+void set_override_sling_raised( bool override );
+
 #endif

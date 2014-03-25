@@ -9,7 +9,7 @@
 #define LIFT_CONTROL_LOOP_MS       100     // ten times per second
 #define LIFT_CONTROL_CM_PER_LOOP   0.2     
 
-static float RAW_LAT_SPEED = LAT_TICKS_PER_CM;        // ticks/sec
+static float RAW_LAT_SPEED = LAT_TICKS_PER_CM * 2;        // ticks/sec
 static float RAW_LIFT_UP_SPEED = 90;                  // of 255 PWM
 static float RAW_LIFT_DOWN_SPEED = 70;                // of 255 PWM
 
@@ -49,6 +49,7 @@ void motor_loop()
   if( lat_action == MOTOR_RIGHT && interlocked_right() ||
       lat_action == MOTOR_LEFT  && interlocked_left() )
   {
+    Serial.println( "Lat interlocked" );
     set_lat_action( MOTOR_STOP );
   }
   if( lat_action != MOTOR_STOP ) {
@@ -137,23 +138,32 @@ int get_lift_action()
 
 void set_lift_action_auto( motor_direction dir )
 {
-  if( interlocked_up() || interlocked_down() ) {
+  /*if( interlocked_up() || interlocked_down() ) {
     return;
-  }
+  }*/
   lift_motor_manual = false;
-  lift_action = dir;
+  //lift_action = dir;
   lift_motor_reference = get_lift_cm();
   switch( dir ) {
     case MOTOR_UP:
+      if( interlocked_up() ) {
+        return;
+      }
+      lift_action = dir;
       //lift_motor.run( FORWARD );
       //lift_motor.setSpeed( RAW_LIFT_UP_SPEED );
       break;
     case MOTOR_DOWN:
+      if( interlocked_down() ) {
+        return;
+      }
+      lift_action = dir;
       //lift_motor.run( BACKWARD );
       //lift_motor.setSpeed( RAW_LIFT_DOWN_SPEED );
       break;
     case MOTOR_STOP:
     default:
+      lift_action = dir;
       lift_motor.run( RELEASE );
       break;
   }
@@ -177,18 +187,32 @@ void set_lift_down_speed( float speed )
   }
 }
 
+int get_lift_position()
+{
+  float lift_cm = get_lift_cm();
+  if( lift_cm > LIFT_UPPER_LIMIT ) {
+    return LIFT_UP;
+  } else if( lift_cm < LIFT_LOWER_LIMIT ) {
+    return LIFT_DOWN;
+  }
+  return LIFT_MID;
+}
+
 void set_lat_action( motor_direction dir )
 {
-  if( interlocked_left() || interlocked_right() ) {
-    return;
-  }
   float lat_speed = 0;
   lat_action = dir;
   switch( dir ) {
     case MOTOR_RIGHT:
+      if( interlocked_right() ) {
+        return;
+      }
       lat_speed = RAW_LAT_SPEED;
       break;
     case MOTOR_LEFT:
+      if( interlocked_left() ) {
+        return;
+      }
       lat_speed = -RAW_LAT_SPEED;
       break;
     case MOTOR_STOP:

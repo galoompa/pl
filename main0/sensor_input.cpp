@@ -29,8 +29,9 @@ class DistanceSensorFilter
     unsigned  filter_buffer[FILTER_BUFFER_SIZE];
     unsigned  sample_index;
     unsigned  filter_index;
+    unsigned  last_input;
   public:
-    DistanceSensorFilter() : sample_index(0), filter_index(0) {}
+    DistanceSensorFilter() : sample_index(0), filter_index(0), last_input(0) {}
     void process_input( unsigned input )
     {
       if( sample_index == 0 ) {
@@ -39,8 +40,27 @@ class DistanceSensorFilter
       } else if( abs( sample - input ) < NOISE_LEVEL ) {
         sample_index++;
         if( sample_index >= FILTER_SAMPLES ) {
-          filter_buffer[filter_index] = sample;
-          filter_index = (filter_index + 1) % FILTER_BUFFER_SIZE;
+          if( sample > last_input + 200 ) {
+            // spurious reading - ignore
+            Serial.print( "High " );
+            Serial.print( sample );
+            Serial.print( " " );
+            Serial.println( last_input );
+            last_input += 100;
+          } else if( sample < last_input - min( last_input, 200 ) ) {
+            // spurious reading - ignore
+            Serial.print( "Low " );
+            Serial.print( sample );
+            Serial.print( " " );
+            Serial.println( last_input );
+            last_input -= 100;
+          } else if( sample <= NOISE_LEVEL ) {
+            // zero? ignore
+          } else {
+            filter_buffer[filter_index] = sample;
+            filter_index = (filter_index + 1) % FILTER_BUFFER_SIZE;
+            last_input = sample;
+          }
           sample_index = 0;
         }
       } else {

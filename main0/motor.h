@@ -12,11 +12,18 @@ enum motor_direction {
   MOTOR_RIGHT      = 2,
 };
 
+enum lift_position {
+  LIFT_UP          = 0,
+  LIFT_DOWN        = 1,
+  LIFT_MID         = 2,
+};
+
 void set_lift_action( motor_direction );
 void set_lift_up_speed( float speed );
 void set_lift_down_speed( float speed );
 void set_lift_action_auto( motor_direction );
 int get_lift_action();
+int get_lift_position();
 
 void set_lat_action( motor_direction );
 int get_lat_action();

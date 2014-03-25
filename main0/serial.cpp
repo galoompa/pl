@@ -3,6 +3,7 @@
 #include "sensor_input.h"
 #include "ground_map.h"
 #include "Arduino.h"
+#include "interlock.h"
 
 bool get_param( unsigned & param, unsigned & len );
 void process_command( unsigned command, unsigned param );
@@ -52,8 +53,8 @@ void serial_loop()
   static bool last_right_button = HIGH;
   static bool last_left_button = HIGH;
   
-  bool new_right_button = digitalRead( 9 );
-  bool new_left_button = digitalRead( 10 );
+  bool new_right_button = digitalRead( 10 );
+  bool new_left_button = digitalRead( 9 );
   if( new_right_button != last_right_button ) {
     last_right_button = new_right_button;
     //Serial.print( "Right " );
@@ -158,6 +159,20 @@ void process_command( unsigned command, unsigned param )
       break;
     case 7:
       set_K( param );
+      break;
+    case 8: // overrides
+      switch( param ) {
+        case 1:
+          set_override_sling_raised( true );
+          Serial.println( "Sling override on" );
+          break;
+        case 2:
+          set_override_sling_raised( false );
+          Serial.println( "Sling override off" );
+          break;
+        default:
+          break;
+      }
       break;
     case 9: // misc debug
       switch( param ) {

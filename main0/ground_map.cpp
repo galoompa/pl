@@ -11,7 +11,7 @@ unsigned mod_pos( int value, int mod );
 
 // in units of MAP_RESOLUTION (i.e. 1 cm)
 #define MAP_SIZE         25
-#define SEAT_SIZE        11
+#define SEAT_SIZE        9
 
 #define SAFE_MIN_HEIGHT    9
 #define SAFE_MAX_HEIGHT    23
